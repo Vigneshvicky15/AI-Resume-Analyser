@@ -165,8 +165,74 @@ const getAnalysisById = async (req, res, next) => {
   }
 };
 
+// @desc    Update a single analysis report
+// @route   PUT /api/resume/:id
+// @access  Private
+const updateAnalysis = async (req, res, next) => {
+  try {
+    const { jobDescription } = req.body;
+    const analysis = await Analysis.findById(req.params.id);
+
+    if (!analysis) {
+      res.status(404);
+      throw new Error('Analysis report not found');
+    }
+
+    // Auth validation
+    if (analysis.user.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Unauthorized to update this analysis report');
+    }
+
+    if (jobDescription !== undefined) {
+      analysis.jobDescription = jobDescription;
+    }
+
+    await analysis.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Analysis report updated successfully',
+      data: analysis,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete a single analysis report
+// @route   DELETE /api/resume/:id
+// @access  Private
+const deleteAnalysis = async (req, res, next) => {
+  try {
+    const analysis = await Analysis.findById(req.params.id);
+
+    if (!analysis) {
+      res.status(404);
+      throw new Error('Analysis report not found');
+    }
+
+    // Auth validation
+    if (analysis.user.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Unauthorized to delete this analysis report');
+    }
+
+    await Analysis.deleteOne({ _id: req.params.id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Analysis report deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   uploadAndAnalyzeResume,
   getAnalysisHistory,
   getAnalysisById,
+  updateAnalysis,
+  deleteAnalysis,
 };
