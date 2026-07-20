@@ -35,7 +35,9 @@ app.get('/', (req, res) => {
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes); // Fallback for URLs missing /api suffix
 app.use('/api/resume', resumeRoutes);
+app.use('/resume', resumeRoutes); // Fallback for URLs missing /api suffix
 
 // Fallback Route (404)
 app.use((req, res, next) => {
