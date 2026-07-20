@@ -53,17 +53,20 @@ const uploadAndAnalyzeResume = async (req, res, next) => {
     const localFilePath = path.join(uploadDir, fileName);
     fs.writeFileSync(localFilePath, req.file.buffer);
 
-    // Dynamic local URL that always loads successfully in any standard browser
-    const resumeUrl = `${req.protocol}://${req.get('host')}/uploads/${fileName}`;
+    // PDF URL - Default to local uploads copy
+    let resumeUrl = `${req.protocol}://${req.get('host')}/uploads/${fileName}`;
     console.log('[Resume Controller] PDF saved locally. URL:', resumeUrl);
 
-    // Optional Cloudinary Upload Backup (Non-blocking so app never crashes on credentials)
+    // Upload to Cloudinary (Bypasses errors and falls back to local URL if Cloudinary is not configured)
     try {
-      console.log('[Resume Controller] Uploading backup to Cloudinary in background...');
-      await uploadToCloudinary(req.file.buffer);
-      console.log('[Resume Controller] Cloudinary backup completed successfully.');
+      console.log('[Resume Controller] Uploading to Cloudinary...');
+      const cloudinaryResult = await uploadToCloudinary(req.file.buffer);
+      if (cloudinaryResult && cloudinaryResult.secure_url) {
+        resumeUrl = cloudinaryResult.secure_url;
+        console.log('[Resume Controller] Cloudinary upload successful. URL:', resumeUrl);
+      }
     } catch (clError) {
-      console.warn('[Resume Controller] Cloudinary backup upload failed (non-blocking):', clError.message);
+      console.warn('[Resume Controller] Cloudinary upload failed (falling back to local URL):', clError.message);
     }
 
     // Step 3 & 4: Extract text using pdf-parse and clean it
