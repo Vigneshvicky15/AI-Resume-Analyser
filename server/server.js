@@ -16,7 +16,10 @@ const app = express();
 
 // Standard middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin: function (origin, callback) {
+    // Dynamically allow any incoming origin to bypass CORS issues on Vercel and local development
+    callback(null, true);
+  },
   credentials: true
 }));
 app.use(express.json());
