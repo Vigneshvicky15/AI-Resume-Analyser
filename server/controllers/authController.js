@@ -18,8 +18,10 @@ const registerUser = async (req, res, next) => {
       throw new Error('Password must be at least 6 characters long');
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Check if user already exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: normalizedEmail });
 
     if (userExists) {
       res.status(400);
@@ -29,7 +31,7 @@ const registerUser = async (req, res, next) => {
     // Create user (password will be hashed via Mongoose pre-save hook)
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password,
     });
 
@@ -65,8 +67,10 @@ const loginUser = async (req, res, next) => {
       throw new Error('Please provide email and password');
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Check for user email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (user && (await user.matchPassword(password))) {
       res.status(200).json({

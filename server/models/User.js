@@ -30,9 +30,14 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Helper to detect if a string is already a valid bcrypt hash
+const isBcryptHash = (str) => {
+  return typeof str === 'string' && /^\$2[ayb]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(str);
+};
+
 // Encrypt password using bcrypt before saving
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || isBcryptHash(this.password)) {
     return next();
   }
   const salt = await bcrypt.genSalt(10);
