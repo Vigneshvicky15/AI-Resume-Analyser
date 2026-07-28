@@ -57,12 +57,15 @@ const registerUser = async (req, res, next) => {
         console.log('[SMTP] OTP email sent successfully.');
       } catch (mailError) {
         console.error('[SMTP] Failed to send registration OTP email:', mailError.message);
-        // Dev fallback if SMTP fails but credentials exist
-        isVerified = true;
+        console.log(`[DEV MODE] Since email failed, your OTP is: ${otp}`);
       }
     } else {
-      console.warn('[SMTP] Mail credentials missing. Auto-verifying user in dev mode...');
-      isVerified = true;
+      console.warn('[SMTP] Mail credentials missing. Forcing verification flow anyway.');
+      console.log(`======================================`);
+      console.log(`[DEV MODE] SMTP not configured!`);
+      console.log(`[DEV MODE] User: ${normalizedEmail}`);
+      console.log(`[DEV MODE] Your OTP is: ${otp}`);
+      console.log(`======================================`);
     }
 
     // Create user
@@ -185,27 +188,29 @@ const resendOTP = async (req, res, next) => {
 
     // Send email
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      await sendEmail({
-        email: normalizedEmail,
-        subject: 'ResumePilot AI - New Verification OTP',
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #e4e4e7; border-radius: 12px;">
-            <h2 style="color: #4f46e5; text-align: center;">New Verification Code</h2>
-            <p>You requested a new verification code. Please verify your email address by entering this 6-digit OTP code:</p>
-            <h1 style="background: #f4f4f5; padding: 15px; border-radius: 8px; text-align: center; letter-spacing: 5px; color: #4f46e5; font-size: 32px; font-family: monospace; margin: 20px 0;">${otp}</h1>
-            <p>This code will expire in <strong>15 minutes</strong>.</p>
-          </div>
-        `
-      });
+      try {
+        await sendEmail({
+          email: normalizedEmail,
+          subject: 'ResumePilot AI - New Verification OTP',
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #e4e4e7; border-radius: 12px;">
+              <h2 style="color: #4f46e5; text-align: center;">New Verification Code</h2>
+              <p>You requested a new verification code. Please verify your email address by entering this 6-digit OTP code:</p>
+              <h1 style="background: #f4f4f5; padding: 15px; border-radius: 8px; text-align: center; letter-spacing: 5px; color: #4f46e5; font-size: 32px; font-family: monospace; margin: 20px 0;">${otp}</h1>
+              <p>This code will expire in <strong>15 minutes</strong>.</p>
+            </div>
+          `
+        });
+      } catch (err) {
+        console.log(`[DEV MODE] Since email failed, your new OTP is: ${otp}`);
+      }
     } else {
-      console.warn('[SMTP] Mail credentials missing. Resending OTP as auto-verified...');
-      user.isVerified = true;
-      await user.save();
-      res.status(200).json({
-        success: true,
-        message: 'SMTP credentials missing. Account auto-verified successfully.',
-      });
-      return;
+      console.warn('[SMTP] Mail credentials missing. Logging new OTP to console...');
+      console.log(`======================================`);
+      console.log(`[DEV MODE] SMTP not configured!`);
+      console.log(`[DEV MODE] User: ${normalizedEmail}`);
+      console.log(`[DEV MODE] Your New OTP is: ${otp}`);
+      console.log(`======================================`);
     }
 
     user.otp = otp;

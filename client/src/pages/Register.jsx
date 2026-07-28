@@ -38,13 +38,23 @@ const Register = () => {
     setIsSubmitting(false);
 
     if (result.success) {
-      toast.success('Registration successful! Welcome to PerfectResume.AI.', {
-        style: {
-          background: '#064e3b',
-          color: '#fff',
-        },
-      });
-      navigate('/dashboard');
+      if (result.requiresVerification) {
+        toast.success('OTP sent to your email. Please verify to continue.', {
+          style: {
+            background: '#0f172a',
+            color: '#fff',
+          },
+        });
+        navigate('/verify-otp', { state: { email: result.email } });
+      } else {
+        toast.success('Registration successful! Welcome to PerfectResume.AI.', {
+          style: {
+            background: '#064e3b',
+            color: '#fff',
+          },
+        });
+        navigate('/dashboard');
+      }
     } else {
       toast.error(result.error || 'Registration failed. Email might already be taken.');
     }

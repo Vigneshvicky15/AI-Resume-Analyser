@@ -40,7 +40,17 @@ const Login = () => {
       });
       navigate('/dashboard');
     } else {
-      toast.error(result.error || 'Invalid credentials. Please try again.');
+      if (result.requiresVerification) {
+        toast.error('Please verify your email address before logging in.', {
+          style: {
+            background: '#0f172a',
+            color: '#fff',
+          },
+        });
+        navigate('/verify-otp', { state: { email: result.email } });
+      } else {
+        toast.error(result.error || 'Invalid credentials. Please try again.');
+      }
     }
   };
 
