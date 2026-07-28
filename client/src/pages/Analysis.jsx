@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
 import AnalysisResult from '../components/AnalysisResult';
 import Loader from '../components/Loader';
-import { ChevronLeft, ArrowLeft, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ArrowLeft, AlertCircle, Download, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Analysis = () => {
@@ -38,6 +38,36 @@ const Analysis = () => {
       fetchAnalysis();
     }
   }, [id]);
+
+  const handleDownloadPDF = async () => {
+    try {
+      toast.loading('Generating PDF...', { id: 'pdf-download' });
+      const response = await api.get(`/resume/${id}/download`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Resume_Analysis_${analysis?.domain || 'Report'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      toast.success('PDF Downloaded!', { id: 'pdf-download' });
+    } catch (error) {
+      toast.error('Failed to generate PDF', { id: 'pdf-download' });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/resume/${id}`);
+      toast.success('Report deleted successfully');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error('Failed to delete report');
+    }
+  };
 
   if (loading) {
     return (
@@ -75,8 +105,8 @@ const Analysis = () => {
       <div className="absolute top-[5%] right-[-5%] h-[400px] w-[400px] rounded-full bg-brand-500/5 blur-[100px] pointer-events-none"></div>
 
       <div className="mx-auto max-w-5xl space-y-6 relative animate-fade-in">
-        {/* Back navigation bar */}
-        <div>
+        {/* Back navigation bar & actions */}
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <button
             onClick={() => navigate('/dashboard')}
             className="inline-flex items-center space-x-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-all bg-white/5 border border-white/5 px-3 py-2 rounded-xl"
@@ -84,6 +114,23 @@ const Analysis = () => {
             <ChevronLeft className="h-4 w-4" />
             <span>Back to Dashboard</span>
           </button>
+          
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleDownloadPDF}
+              className="inline-flex items-center space-x-1.5 text-xs font-semibold text-brand-400 hover:text-brand-300 transition-all bg-brand-500/10 border border-brand-500/20 px-3 py-2 rounded-xl"
+            >
+              <Download className="h-4 w-4" />
+              <span>Download PDF</span>
+            </button>
+            <button
+              onClick={handleDelete}
+              className="inline-flex items-center space-x-1.5 text-xs font-semibold text-red-400 hover:text-red-300 transition-all bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-xl"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Delete</span>
+            </button>
+          </div>
         </div>
 
         {/* Detailed Assessment */}

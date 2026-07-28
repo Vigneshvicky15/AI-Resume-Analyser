@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Menu, X, LogOut, LayoutDashboard, UploadCloud } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, UploadCloud, Shield } from 'lucide-react';
 import heroLogo from '../assets/hero.png';
 
 const Navbar = () => {
@@ -47,6 +47,20 @@ const Navbar = () => {
                     <LayoutDashboard className="h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>
+
+                  {user.role === 'admin' && (
+                    <Link
+                      to="/admin"
+                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                        isActive('/admin')
+                          ? 'bg-brand-500/20 text-brand-300 font-semibold'
+                          : 'text-brand-400 hover:bg-brand-500/10'
+                      }`}
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Admin Portal</span>
+                    </Link>
+                  )}
 
                   <Link
                     to="/dashboard"
@@ -124,6 +138,18 @@ const Navbar = () => {
                 <LayoutDashboard className="h-5 w-5" />
                 <span>Dashboard</span>
               </Link>
+              {user.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center space-x-2 px-3 py-3 rounded-xl text-base font-medium ${
+                    isActive('/admin') ? 'bg-brand-500/20 text-brand-300' : 'text-brand-400'
+                  }`}
+                >
+                  <Shield className="h-5 w-5" />
+                  <span>Admin Portal</span>
+                </Link>
+              )}
               <div className="px-3 py-2 text-sm text-slate-400 border-t border-white/5 mt-2 pt-2 flex items-center space-x-2">
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white uppercase">
                   {user.name.charAt(0)}

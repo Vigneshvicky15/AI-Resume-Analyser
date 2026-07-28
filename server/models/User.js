@@ -24,6 +24,31 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Please add a password'],
       minlength: [6, 'Password must be at least 6 characters'],
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      default: null,
+    },
+    otpExpiry: {
+      type: Date,
+      default: null,
+    },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpire: {
+      type: Date,
+      default: null,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
   },
   {
     timestamps: true,

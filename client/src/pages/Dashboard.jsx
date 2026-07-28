@@ -315,7 +315,16 @@ const Dashboard = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {history.map((item) => (
-                  <HistoryCard key={item._id} analysis={item} />
+                  <HistoryCard key={item._id} analysis={item} onDelete={async (id) => {
+                    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) return;
+                    try {
+                      await api.delete(`/resume/${id}`);
+                      toast.success('Report deleted successfully');
+                      fetchHistory();
+                    } catch (error) {
+                      toast.error('Failed to delete report');
+                    }
+                  }} />
                 ))}
               </div>
             )}

@@ -5,6 +5,7 @@ const {
   getAnalysisById,
   updateAnalysis,
   deleteAnalysis,
+  downloadPDF,
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -19,5 +20,6 @@ router.get('/history', getAnalysisHistory);
 router.get('/:id', getAnalysisById);
 router.put('/:id', updateAnalysis);
 router.delete('/:id', deleteAnalysis);
+router.get('/:id/download', downloadPDF);
 
 module.exports = router;

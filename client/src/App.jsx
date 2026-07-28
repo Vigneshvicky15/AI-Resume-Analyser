@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Analysis from './pages/Analysis';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminRoute from './components/AdminRoute';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -31,6 +33,11 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/analysis/:id" element={<Analysis />} />
+              </Route>
+
+              {/* Admin Routes */}
+              <Route element={<AdminRoute />}>
+                <Route path="/admin" element={<AdminDashboard />} />
               </Route>
 
               {/* Fallback Route */}

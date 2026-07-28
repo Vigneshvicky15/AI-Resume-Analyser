@@ -6,7 +6,7 @@ const protect = async (req, res, next) => {
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
+    req.headers.authorization.toLowerCase().startsWith('bearer')
   ) {
     try {
       // Get token from header
@@ -34,4 +34,15 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const admin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({
+      success: false,
+      message: 'Not authorized as an admin',
+    });
+  }
+};
+
+module.exports = { protect, admin };

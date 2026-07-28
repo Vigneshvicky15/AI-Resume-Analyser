@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Award, Target, Calendar, ChevronRight, FileText } from 'lucide-react';
+import { Award, Target, Calendar, ChevronRight, FileText, Trash2 } from 'lucide-react';
 
-const HistoryCard = ({ analysis }) => {
+const HistoryCard = ({ analysis, onDelete }) => {
   const { _id, score, jobMatchPercentage, jobDescription, createdAt } = analysis;
 
   // Format date nicely
@@ -70,7 +70,17 @@ const HistoryCard = ({ analysis }) => {
       </div>
 
       {/* Action Redirect */}
-      <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-end">
+      <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            if (onDelete) onDelete(_id);
+          }}
+          className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+          title="Delete Report"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
         <Link
           to={`/analysis/${_id}`}
           className="flex items-center space-x-1 text-xs font-semibold text-brand-400 hover:text-brand-300 transition-all group-hover:translate-x-0.5"
