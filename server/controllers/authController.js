@@ -134,8 +134,7 @@ const verifyOTP = async (req, res, next) => {
       return;
     }
 
-    // Master bypass '123456' for testing on Render due to SMTP blocks
-    if ((user.otp !== otp && otp !== '123456') || user.otpExpiry < Date.now()) {
+    if (user.otp !== otp || user.otpExpiry < Date.now()) {
       res.status(400);
       throw new Error('Invalid or expired OTP code');
     }
