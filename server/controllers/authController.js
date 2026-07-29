@@ -30,14 +30,18 @@ const registerUser = async (req, res, next) => {
       throw new Error('User already exists with this email address');
     }
 
-    // Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Check if SMTP is configured
+    const isSmtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+
+    // Generate OTP (Use 123456 as a universal testing OTP if no email is configured)
+    const otp = isSmtpConfigured 
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : '123456';
     const otpExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
 
     let isVerified = false;
 
-    // Check if SMTP is configured
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if (isSmtpConfigured) {
       console.log('[SMTP] Attempting to send registration OTP email to:', normalizedEmail);
       sendEmail({
         email: normalizedEmail,
@@ -181,12 +185,16 @@ const resendOTP = async (req, res, next) => {
       throw new Error('This account is already verified.');
     }
 
-    // Generate new OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const isSmtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+
+    // Generate new OTP (Use 123456 as a universal testing OTP if no email is configured)
+    const otp = isSmtpConfigured 
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : '123456';
     const otpExpiry = Date.now() + 15 * 60 * 1000; // 15 mins
 
     // Send email
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if (isSmtpConfigured) {
       sendEmail({
         email: normalizedEmail,
         subject: 'ResumePilot AI - New Verification OTP',
