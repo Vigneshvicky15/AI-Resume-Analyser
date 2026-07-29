@@ -79,6 +79,7 @@ const registerUser = async (req, res, next) => {
       isVerified,
       otp: isVerified ? null : otp,
       otpExpiry: isVerified ? null : otpExpiry,
+      role: normalizedEmail === 'ai.resume.analyser5@gmail.com' ? 'admin' : 'user',
     });
 
     if (user) {
