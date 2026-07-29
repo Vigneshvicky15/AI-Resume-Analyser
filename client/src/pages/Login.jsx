@@ -101,6 +101,9 @@ const Login = () => {
                 <label htmlFor="password" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Password
                 </label>
+                <Link to="/forgot-password" className="text-xs font-semibold text-brand-400 hover:text-brand-300">
+                  Forgot Password?
+                </Link>
               </div>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
