@@ -62,7 +62,7 @@ const registerUser = async (req, res, next) => {
       } catch (mailError) {
         console.error('[SMTP] Failed to send registration OTP email:', mailError.message);
         res.status(500);
-        throw new Error('Failed to send OTP to your email. Please try again.');
+        throw new Error(`Failed to send OTP to your email: ${mailError.message}. Check SMTP setup.`);
       }
     } else {
       console.warn('[SMTP] Mail credentials missing. Forcing verification flow anyway.');
