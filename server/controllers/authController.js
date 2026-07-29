@@ -43,25 +43,27 @@ const registerUser = async (req, res, next) => {
 
     if (isSmtpConfigured) {
       console.log('[SMTP] Attempting to send registration OTP email to:', normalizedEmail);
-      sendEmail({
-        email: normalizedEmail,
-        subject: 'ResumePilot AI - Email Verification OTP',
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #e4e4e7; border-radius: 12px;">
-            <h2 style="color: #4f46e5; text-align: center;">Welcome to ResumePilot AI!</h2>
-            <p>Thank you for signing up. Please verify your email address by entering this 6-digit OTP code on the verification screen:</p>
-            <h1 style="background: #f4f4f5; padding: 15px; border-radius: 8px; text-align: center; letter-spacing: 5px; color: #4f46e5; font-size: 32px; font-family: monospace; margin: 20px 0;">${otp}</h1>
-            <p>This code will expire in <strong>15 minutes</strong>.</p>
-            <hr style="border: 0; border-top: 1px solid #e4e4e7; margin: 20px 0;" />
-            <p style="font-size: 11px; color: #71717a; text-align: center;">If you did not request this email, please ignore it.</p>
-          </div>
-        `
-      }).then(() => {
+      try {
+        await sendEmail({
+          email: normalizedEmail,
+          subject: 'ResumePilot AI - Email Verification OTP',
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #e4e4e7; border-radius: 12px;">
+              <h2 style="color: #4f46e5; text-align: center;">Welcome to ResumePilot AI!</h2>
+              <p>Thank you for signing up. Please verify your email address by entering this 6-digit OTP code on the verification screen:</p>
+              <h1 style="background: #f4f4f5; padding: 15px; border-radius: 8px; text-align: center; letter-spacing: 5px; color: #4f46e5; font-size: 32px; font-family: monospace; margin: 20px 0;">${otp}</h1>
+              <p>This code will expire in <strong>15 minutes</strong>.</p>
+              <hr style="border: 0; border-top: 1px solid #e4e4e7; margin: 20px 0;" />
+              <p style="font-size: 11px; color: #71717a; text-align: center;">If you did not request this email, please ignore it.</p>
+            </div>
+          `
+        });
         console.log('[SMTP] OTP email sent successfully.');
-      }).catch((mailError) => {
+      } catch (mailError) {
         console.error('[SMTP] Failed to send registration OTP email:', mailError.message);
-        console.log(`[DEV MODE] Since email failed, your OTP is: ${otp}`);
-      });
+        res.status(500);
+        throw new Error('Failed to send OTP to your email. Please try again.');
+      }
     } else {
       console.warn('[SMTP] Mail credentials missing. Forcing verification flow anyway.');
       console.log(`======================================`);
@@ -195,22 +197,25 @@ const resendOTP = async (req, res, next) => {
 
     // Send email
     if (isSmtpConfigured) {
-      sendEmail({
-        email: normalizedEmail,
-        subject: 'ResumePilot AI - New Verification OTP',
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #e4e4e7; border-radius: 12px;">
-            <h2 style="color: #4f46e5; text-align: center;">New Verification Code</h2>
-            <p>You requested a new verification code. Please verify your email address by entering this 6-digit OTP code:</p>
-            <h1 style="background: #f4f4f5; padding: 15px; border-radius: 8px; text-align: center; letter-spacing: 5px; color: #4f46e5; font-size: 32px; font-family: monospace; margin: 20px 0;">${otp}</h1>
-            <p>This code will expire in <strong>15 minutes</strong>.</p>
-          </div>
-        `
-      }).then(() => {
+      try {
+        await sendEmail({
+          email: normalizedEmail,
+          subject: 'ResumePilot AI - New Verification OTP',
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #e4e4e7; border-radius: 12px;">
+              <h2 style="color: #4f46e5; text-align: center;">New Verification Code</h2>
+              <p>You requested a new verification code. Please verify your email address by entering this 6-digit OTP code:</p>
+              <h1 style="background: #f4f4f5; padding: 15px; border-radius: 8px; text-align: center; letter-spacing: 5px; color: #4f46e5; font-size: 32px; font-family: monospace; margin: 20px 0;">${otp}</h1>
+              <p>This code will expire in <strong>15 minutes</strong>.</p>
+            </div>
+          `
+        });
         console.log('[SMTP] Resend OTP email sent successfully.');
-      }).catch((err) => {
-        console.log(`[DEV MODE] Since email failed, your new OTP is: ${otp}`);
-      });
+      } catch (err) {
+        console.error('[SMTP] Failed to resend OTP email:', err.message);
+        res.status(500);
+        throw new Error('Failed to send a new OTP to your email.');
+      }
     } else {
       console.warn('[SMTP] Mail credentials missing. Logging new OTP to console...');
       console.log(`======================================`);
@@ -309,30 +314,32 @@ const forgotPassword = async (req, res, next) => {
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
 
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      sendEmail({
-        email: user.email,
-        subject: 'ResumePilot AI - Password Reset Link',
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #e4e4e7; border-radius: 12px;">
-            <h2 style="color: #4f46e5; text-align: center;">Password Reset Request</h2>
-            <p>You requested a password reset. Please click the button below to set a new password:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background: #4f46e5; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'ResumePilot AI - Password Reset Link',
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #e4e4e7; border-radius: 12px;">
+              <h2 style="color: #4f46e5; text-align: center;">Password Reset Request</h2>
+              <p>You requested a password reset. Please click the button below to set a new password:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background: #4f46e5; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+              </div>
+              <p>Or copy and paste this link in your browser:</p>
+              <p style="word-break: break-all; color: #71717a; font-size: 12px; background: #f4f4f5; padding: 10px; border-radius: 6px;">${resetUrl}</p>
+              <p>This link will expire in <strong>30 minutes</strong>.</p>
             </div>
-            <p>Or copy and paste this link in your browser:</p>
-            <p style="word-break: break-all; color: #71717a; font-size: 12px; background: #f4f4f5; padding: 10px; border-radius: 6px;">${resetUrl}</p>
-            <p>This link will expire in <strong>30 minutes</strong>.</p>
-          </div>
-        `
-      }).then(() => {
+          `
+        });
         console.log('[SMTP] Forgot Password email sent successfully.');
-      }).catch(async (err) => {
-        // Rollback token on failure
+      } catch (err) {
         user.resetPasswordToken = null;
         user.resetPasswordExpire = null;
         await user.save();
         console.error('[SMTP] Forgot Password email failed:', err);
-      });
+        res.status(500);
+        throw new Error('Failed to send password reset link. Please try again.');
+      }
     } else {
       console.warn('[SMTP] Mail credentials missing. Reset URL (dev output):', resetUrl);
       res.status(200).json({
