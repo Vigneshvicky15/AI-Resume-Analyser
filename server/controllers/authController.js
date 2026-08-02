@@ -31,19 +31,18 @@ const registerUser = async (req, res, next) => {
     }
 
     // Check if SMTP is configured
-    const isSmtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      res.status(500);
+      throw new Error('Email service is not configured on the server. Please contact the administrator.');
+    }
 
-    // Generate OTP (Use 123456 as a universal testing OTP if no email is configured)
-    const otp = isSmtpConfigured 
-      ? Math.floor(100000 + Math.random() * 900000).toString()
-      : '123456';
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
+    const isVerified = false;
 
-    let isVerified = false;
-
-    if (isSmtpConfigured) {
-      console.log('[SMTP] Attempting to send registration OTP email to:', normalizedEmail);
-      sendEmail({
+    try {
+      await sendEmail({
         email: normalizedEmail,
         subject: 'ResumePilot AI - Email Verification OTP',
         html: `
@@ -56,19 +55,11 @@ const registerUser = async (req, res, next) => {
             <p style="font-size: 11px; color: #71717a; text-align: center;">If you did not request this email, please ignore it.</p>
           </div>
         `
-      }).then(() => {
-        console.log('[SMTP] OTP email sent successfully.');
-      }).catch((mailError) => {
-        console.error('[SMTP] Failed to send registration OTP email:', mailError.message);
-        console.log(`[DEV MODE] Since email failed, your OTP is: ${otp}`);
       });
-    } else {
-      console.warn('[SMTP] Mail credentials missing. Forcing verification flow anyway.');
-      console.log(`======================================`);
-      console.log(`[DEV MODE] SMTP not configured!`);
-      console.log(`[DEV MODE] User: ${normalizedEmail}`);
-      console.log(`[DEV MODE] Your OTP is: ${otp}`);
-      console.log(`======================================`);
+    } catch (mailError) {
+      console.error('[SMTP Error]:', mailError.message);
+      res.status(500);
+      throw new Error(`Failed to send OTP to your email: ${mailError.message}`);
     }
 
     // Create user
@@ -186,17 +177,18 @@ const resendOTP = async (req, res, next) => {
       throw new Error('This account is already verified.');
     }
 
-    const isSmtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      res.status(500);
+      throw new Error('Email service is not configured on the server. Please contact the administrator.');
+    }
 
-    // Generate new OTP (Use 123456 as a universal testing OTP if no email is configured)
-    const otp = isSmtpConfigured 
-      ? Math.floor(100000 + Math.random() * 900000).toString()
-      : '123456';
+    // Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = Date.now() + 15 * 60 * 1000; // 15 mins
 
     // Send email
-    if (isSmtpConfigured) {
-      sendEmail({
+    try {
+      await sendEmail({
         email: normalizedEmail,
         subject: 'ResumePilot AI - New Verification OTP',
         html: `
@@ -207,18 +199,11 @@ const resendOTP = async (req, res, next) => {
             <p>This code will expire in <strong>15 minutes</strong>.</p>
           </div>
         `
-      }).then(() => {
-        console.log('[SMTP] Resend OTP email sent successfully.');
-      }).catch((err) => {
-        console.log(`[DEV MODE] Since email failed, your new OTP is: ${otp}`);
       });
-    } else {
-      console.warn('[SMTP] Mail credentials missing. Logging new OTP to console...');
-      console.log(`======================================`);
-      console.log(`[DEV MODE] SMTP not configured!`);
-      console.log(`[DEV MODE] User: ${normalizedEmail}`);
-      console.log(`[DEV MODE] Your New OTP is: ${otp}`);
-      console.log(`======================================`);
+    } catch (mailError) {
+      console.error('[SMTP Error]:', mailError.message);
+      res.status(500);
+      throw new Error('Failed to send new OTP to your email.');
     }
 
     user.otp = otp;
@@ -309,8 +294,16 @@ const forgotPassword = async (req, res, next) => {
 
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
 
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      sendEmail({
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      user.resetPasswordToken = null;
+      user.resetPasswordExpire = null;
+      await user.save();
+      res.status(500);
+      throw new Error('Email service is not configured on the server. Please contact the administrator.');
+    }
+
+    try {
+      await sendEmail({
         email: user.email,
         subject: 'ResumePilot AI - Password Reset Link',
         html: `
@@ -325,22 +318,15 @@ const forgotPassword = async (req, res, next) => {
             <p>This link will expire in <strong>30 minutes</strong>.</p>
           </div>
         `
-      }).then(() => {
-        console.log('[SMTP] Forgot Password email sent successfully.');
-      }).catch(async (err) => {
-        // Rollback token on failure
-        user.resetPasswordToken = null;
-        user.resetPasswordExpire = null;
-        await user.save();
-        console.error('[SMTP] Forgot Password email failed:', err);
       });
-    } else {
-      console.warn('[SMTP] Mail credentials missing. Reset URL (dev output):', resetUrl);
-      res.status(200).json({
-        success: true,
-        message: `[Dev Mode Link] Password reset token generated successfully. Link: ${resetUrl}`,
-      });
-      return;
+    } catch (mailError) {
+      // Rollback token on failure
+      user.resetPasswordToken = null;
+      user.resetPasswordExpire = null;
+      await user.save();
+      console.error('[SMTP Error]:', mailError.message);
+      res.status(500);
+      throw new Error('Failed to send password reset email. Please try again later.');
     }
 
     res.status(200).json({
