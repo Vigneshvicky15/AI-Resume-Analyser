@@ -31,7 +31,7 @@ https://ai-resume-analyser-coral-gamma.vercel.app/
 
 ## 💻 GitHub Repository
 
-Add your repository URL.
+https://github.com/Vigneshvicky15/AI-Resume-Analyser
 
 ## 📦 Installation
 
