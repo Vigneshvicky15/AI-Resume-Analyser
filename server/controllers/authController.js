@@ -31,7 +31,7 @@ const registerUser = async (req, res, next) => {
     }
 
     // Check if Email API is configured
-    if (!process.env.RESEND_API_KEY) {
+    if (!process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID || !process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
       res.status(500);
       throw new Error('Email service is not configured on the server. Please contact the administrator.');
     }
@@ -177,7 +177,7 @@ const resendOTP = async (req, res, next) => {
       throw new Error('This account is already verified.');
     }
 
-    if (!process.env.RESEND_API_KEY) {
+    if (!process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID || !process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
       res.status(500);
       throw new Error('Email service is not configured on the server. Please contact the administrator.');
     }
@@ -294,7 +294,7 @@ const forgotPassword = async (req, res, next) => {
 
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
 
-    if (!process.env.RESEND_API_KEY) {
+    if (!process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID || !process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
       user.resetPasswordToken = null;
       user.resetPasswordExpire = null;
       await user.save();

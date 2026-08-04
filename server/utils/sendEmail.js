@@ -1,36 +1,44 @@
-const { Resend } = require('resend');
-
 /**
- * Sends an email using Resend API.
- * Expects RESEND_API_KEY to be configured in process.env.
+ * Sends an email using EmailJS REST API.
+ * Expects EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY, and EMAILJS_PRIVATE_KEY to be configured in process.env.
  * @param {Object} options - Email options.
  * @param {string} options.email - Recipient email.
  * @param {string} options.subject - Email subject.
  * @param {string} options.html - HTML content of the email.
  */
 const sendEmail = async (options) => {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error('RESEND_API_KEY is not configured');
+  if (!process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID || !process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
+    throw new Error('EmailJS credentials are not fully configured on the server. Please contact the administrator.');
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  const payload = {
+    service_id: process.env.EMAILJS_SERVICE_ID,
+    template_id: process.env.EMAILJS_TEMPLATE_ID,
+    user_id: process.env.EMAILJS_PUBLIC_KEY,
+    accessToken: process.env.EMAILJS_PRIVATE_KEY,
+    template_params: {
+      to_email: options.email,
+      subject: options.subject,
+      message_html: options.html
+    }
+  };
 
-  // If you don't have a custom domain verified in Resend, you MUST use 'onboarding@resend.dev'
-  // as the sender, and you can only send TO the email address you signed up with.
-  const { data, error } = await resend.emails.send({
-    from: 'ResumePilot AI <onboarding@resend.dev>',
-    to: options.email,
-    subject: options.subject,
-    html: options.html,
+  const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
   });
 
-  if (error) {
-    console.error('[Resend Error]:', error);
-    throw new Error(error.message);
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[EmailJS Error]:', errorText);
+    throw new Error('Failed to send email via EmailJS');
   }
 
-  console.log('[Resend] Email sent successfully:', data);
-  return data;
+  console.log('[EmailJS] Email sent successfully');
+  return true;
 };
 
 module.exports = sendEmail;
