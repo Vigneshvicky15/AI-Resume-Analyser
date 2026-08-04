@@ -34,7 +34,7 @@ const sendEmail = async (options) => {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[EmailJS Error]:', errorText);
-    throw new Error('Failed to send email via EmailJS');
+    throw new Error('Failed to send email via EmailJS: ' + errorText);
   }
 
   console.log('[EmailJS] Email sent successfully');
