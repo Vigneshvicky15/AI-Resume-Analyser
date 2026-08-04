@@ -1,49 +1,36 @@
-const nodemailer = require('nodemailer');
-const dns = require('dns');
+const { Resend } = require('resend');
 
 /**
- * Sends an email using Nodemailer and Gmail SMTP service.
- * Expects SMTP_USER and SMTP_PASS to be configured in process.env.
+ * Sends an email using Resend API.
+ * Expects RESEND_API_KEY to be configured in process.env.
  * @param {Object} options - Email options.
  * @param {string} options.email - Recipient email.
  * @param {string} options.subject - Email subject.
  * @param {string} options.html - HTML content of the email.
  */
 const sendEmail = async (options) => {
-  // Force IPv4 resolution to bypass Render's IPv6 ENETUNREACH issues
-  let smtpHost = 'smtp.gmail.com';
-  try {
-    const lookupResult = await dns.promises.lookup('smtp.gmail.com', { family: 4 });
-    smtpHost = lookupResult.address;
-    console.log(`[SMTP] Resolved smtp.gmail.com to IPv4: ${smtpHost}`);
-  } catch (err) {
-    console.error('[SMTP] DNS lookup failed, falling back to hostname', err);
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not configured');
   }
 
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    connectionTimeout: 20000, // Increased to 20 seconds for slow cloud environments
-    socketTimeout: 20000,
-    tls: {
-      servername: 'smtp.gmail.com', // Required for SNI when connecting via IP
-      rejectUnauthorized: false
-    }
-  });
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
-  const mailOptions = {
-    from: `"ResumePilot AI" <${process.env.SMTP_USER}>`,
+  // If you don't have a custom domain verified in Resend, you MUST use 'onboarding@resend.dev'
+  // as the sender, and you can only send TO the email address you signed up with.
+  const { data, error } = await resend.emails.send({
+    from: 'ResumePilot AI <onboarding@resend.dev>',
     to: options.email,
     subject: options.subject,
     html: options.html,
-  };
+  });
 
-  await transporter.sendMail(mailOptions);
+  if (error) {
+    console.error('[Resend Error]:', error);
+    throw new Error(error.message);
+  }
+
+  console.log('[Resend] Email sent successfully:', data);
+  return data;
 };
 
 module.exports = sendEmail;
