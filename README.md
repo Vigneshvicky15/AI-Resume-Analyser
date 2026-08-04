@@ -27,7 +27,7 @@ An AI-powered MERN Stack web application that analyzes resumes against job descr
 
 ## 🌐 Live Demo
 
-Add your deployed application URL.
+https://ai-resume-analyser-coral-gamma.vercel.app/
 
 ## 💻 GitHub Repository
 
